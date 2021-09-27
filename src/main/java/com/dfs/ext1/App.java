@@ -2,8 +2,6 @@ package com.dfs.ext1;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,14 +11,10 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
-
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.poi.hssf.usermodel.HSSFFooter;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -54,6 +48,9 @@ import org.apache.poi.xwpf.usermodel.XWPFTableRow;
  */
 
 public final class App {
+
+    private static String version = "1.0.002";
+
     private App() {
     }
 
@@ -107,20 +104,7 @@ public final class App {
 
                 // ---------------------------
 
-                MavenXpp3Reader reader = new MavenXpp3Reader();
-                Model model;
-                if ((new File("pom.xml")).exists())
-                model = reader.read(new FileReader("pom.xml"));
-                else
-                model = reader.read(
-                    new InputStreamReader(
-                        App.class.getResourceAsStream(
-                        "/META-INF/maven/de.scrum-master.stackoverflow/aspectj-introduce-method/pom.xml"
-                    )
-                    )
-                );
-
-                String response = model.getId();
+                String response = version;
 
                 // ---------------------------
 
