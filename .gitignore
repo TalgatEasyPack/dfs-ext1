@@ -6,6 +6,7 @@ compile/
 #
 # Standard Maven .gitignore
 #
+!compile/
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -31,3 +32,5 @@ buildNumber.properties
 .factorypath
 .project
 .vscode/
+compile/dfs-ext1-1.0.002.jar
+compile/dfs-ext1-1.0.001.jar
