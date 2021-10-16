@@ -35,7 +35,9 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFPicture;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 
 public class MySignListForExcel implements HttpHandler {
@@ -138,87 +140,104 @@ public class MySignListForExcel implements HttpHandler {
 
         List<IBodyElement> bodyElements = document.getBodyElements();
 
+        String fontName = "Times New Roman";
+
         //---------------------------------------------------------------------------------------------------------------------------
         // Таблица отв. исполнителей
-        XWPFTable tableManagers = (XWPFTable) bodyElements.get(1);
+        XWPFTable tableManagers;
+        String tableManagers_row_0_cell_0 = null;
+        List<Integer> tableManagers_row_N_cell_0  = new ArrayList<Integer>();   // Подпись отв. исполнителей
+        List<String> tableManagers_row_N_cell_1   = new ArrayList<String>();    // Инициалы отв. исполнителей
 
-        // Подбираем Фонт
-        String fontName                 = tableManagers.getRow( 0 ).getCell( 0 ).getParagraphArray(0).getRuns().get(0).getFontName();
+        if( bodyElements.get(1) instanceof XWPFTable){
 
-        // Наименование позиции отв. исполнителей
-        String tableManagers_row_0_cell_0 = tableManagers.getRow( 0 ).getCell( 0 ).getText();
+            tableManagers = (XWPFTable) bodyElements.get(1);
 
-        // Подпись отв. исполнителей
-        List<Integer> tableManagers_row_N_cell_0  = new ArrayList<Integer>();
+            // Подбираем Фонт
+            fontName                 = tableManagers.getRow( 0 ).getCell( 0 ).getParagraphArray(0).getRuns().get(0).getFontName();
 
-        // Инициалы отв. исполнителей
-        List<String> tableManagers_row_N_cell_1   = new ArrayList<String>();
+            // Наименование позиции отв. исполнителей
+            tableManagers_row_0_cell_0 = tableManagers.getRow( 0 ).getCell( 0 ).getText();
 
-        // Заполняем данные о подписях
-        for (int i = 1; i < tableManagers.getNumberOfRows() ; i++) {
+            // Заполняем данные о подписях
+            for (int i = 1; i < tableManagers.getNumberOfRows() ; i++) {
 
-            List<XWPFPicture> list = tableManagers.getRow( i ).getCell( 0 ).getParagraphArray( 0 ).getRuns().get(0).getEmbeddedPictures();
+                int image = -1;
 
-            if( list.size() > 0 ){
+                List<XWPFRun> runs = tableManagers.getRow( i ).getCell( 0 ).getParagraphArray(0).getRuns();
+                
+                if( runs.size() > 0 ){
 
-                tableManagers_row_N_cell_0.add(
-                    workbook.addPicture( tableManagers.getRow( i ).getCell( 0 ).
-                    getParagraphArray(0).getRuns().get(0).
-                    getEmbeddedPictures().get(0).getPictureData().getData(), 
-                    Workbook.PICTURE_TYPE_PNG)
+                    List<XWPFPicture> list = tableManagers.getRow( i ).getCell( 0 ).getParagraphArray( 0 ).getRuns().get(0).getEmbeddedPictures();
+
+                    if( list.size() > 0 ){
+
+                        image = workbook.addPicture( tableManagers.getRow( i ).getCell( 0 ).
+                            getParagraphArray(0).getRuns().get(0).
+                            getEmbeddedPictures().get(0).getPictureData().getData(), 
+                            Workbook.PICTURE_TYPE_PNG);
+        
+                    }
+
+                }
+
+                tableManagers_row_N_cell_0.add( image );
+
+                tableManagers_row_N_cell_1.add(
+                    tableManagers.getRow( i ).getCell( 1 ).getText()
                 );
 
-            }else{
-
-                tableManagers_row_N_cell_0.add( -1 );
-
             }
-
-            tableManagers_row_N_cell_1.add(
-                tableManagers.getRow( i ).getCell( 1 ).getText()
-            );
 
         }
 
+
         //---------------------------------------------------------------------------------------------------------------------------
 
         //---------------------------------------------------------------------------------------------------------------------------
         // Таблица отв. исполнителей
 
-        XWPFTable tableWorkgroup = (XWPFTable) bodyElements.get(3);
+        XWPFTable tableWorkgroup;
+        String tableWorkgroup_row_0_cell_0 = null;
+        List<Integer> tableWorkgroup_row_N_cell_0 = new ArrayList<Integer>();   // Подпись соисполнителей
+        List<String> tableWorkgroup_row_N_cell_1 = new ArrayList<String>();     // Инициалы соисполнителей
 
-        // Наименование позиции соисполнителей
-        String tableWorkgroup_row_0_cell_0 = tableWorkgroup.getRow( 0 ).getCell( 0 ).getText();
+        if( bodyElements.get(1) instanceof XWPFTable){
 
-        // Подпись соисполнителей
-        List<Integer> tableWorkgroup_row_N_cell_0  = new ArrayList<Integer>();
+            tableWorkgroup = (XWPFTable) bodyElements.get(3);
 
-        // Инициалы соисполнителей
-        List<String> tableWorkgroup_row_N_cell_1   = new ArrayList<String>();
+            // Наименование позиции соисполнителей
+            tableWorkgroup_row_0_cell_0 = tableWorkgroup.getRow( 0 ).getCell( 0 ).getText();
 
-        // Заполняем данные о подписях
-        for (int i = 1; i < tableWorkgroup.getNumberOfRows() ; i++) {
+            // Заполняем данные о подписях
+            for (int i = 1; i < tableWorkgroup.getNumberOfRows() ; i++) {
+                
+                int image = -1;
 
-            List<XWPFPicture> list = tableWorkgroup.getRow( i ).getCell( 0 ).getParagraphArray( 0 ).getRuns().get(0).getEmbeddedPictures();
+                List<XWPFRun> runs = tableWorkgroup.getRow( i ).getCell( 0 ).getParagraphArray(0).getRuns();
+                
+                if( runs.size() > 0 ){
 
-            if( list.size() > 0 ){
+                    List<XWPFPicture> list = tableWorkgroup.getRow( i ).getCell( 0 ).getParagraphArray( 0 ).getRuns().get(0).getEmbeddedPictures();
 
-                tableWorkgroup_row_N_cell_0.add(
-                    workbook.addPicture( tableWorkgroup.getRow( i ).getCell( 0 ).
-                    getParagraphArray(0).getRuns().get(0).
-                    getEmbeddedPictures().get(0).getPictureData().getData(), 
-                    Workbook.PICTURE_TYPE_PNG)
+                    if( list.size() > 0 ){
+
+                        image = workbook.addPicture( tableWorkgroup.getRow( i ).getCell( 0 ).
+                            getParagraphArray(0).getRuns().get(0).
+                            getEmbeddedPictures().get(0).getPictureData().getData(), 
+                            Workbook.PICTURE_TYPE_PNG);
+        
+                    }
+
+                }
+
+                tableWorkgroup_row_N_cell_0.add( image );
+
+                tableWorkgroup_row_N_cell_1.add(
+                    tableWorkgroup.getRow( i ).getCell( 1 ).getText()
                 );
 
-            }else{
-
-                tableWorkgroup_row_N_cell_0.add( -1 );
-
             }
-
-            tableWorkgroup_row_N_cell_1.add(
-                tableWorkgroup.getRow( i ).getCell( 1 ).getText()
-            );
 
         }
         //---------------------------------------------------------------------------------------------------------------------------
@@ -305,55 +324,61 @@ public class MySignListForExcel implements HttpHandler {
         // Создаем строки с Подписями и Инициалами Отв. Исполнителей
 
         for (int i = 0; i < tableManagers_row_N_cell_1.size(); i++) {
+
+            String value = tableManagers_row_N_cell_1.get( i );
+
+            if( !( value == null || value.isEmpty() || value.trim().isEmpty() ) ){
             
-            XSSFRow row  = sheet.createRow( lastRowNum );            
-            
-            if( rightColumn > 0 )
-                sheet.addMergedRegion( new CellRangeAddress(
-                    lastRowNum, lastRowNum, 0, rightColumn
-            ));
-            
-            row.setHeight( height );
+                XSSFRow row  = sheet.createRow( lastRowNum );            
+                
+                if( rightColumn > 0 )
+                    sheet.addMergedRegion( new CellRangeAddress(
+                        lastRowNum, lastRowNum, 0, rightColumn
+                ));
+                
+                row.setHeight( height );
 
-            XSSFCell cell  = row.createCell(0);
+                XSSFCell cell  = row.createCell(0);
 
-            cell.setCellType(CellType.STRING);
-    
-            cell.setCellValue( tableManagers_row_N_cell_1.get( i ) );
-    
-            XSSFCellStyle cellStyle = workbook.createCellStyle();
-    
-            cellStyle.setFont(font_Normal);
+                cell.setCellType(CellType.STRING);
+        
+                cell.setCellValue( tableManagers_row_N_cell_1.get( i ) );
+        
+                XSSFCellStyle cellStyle = workbook.createCellStyle();
+        
+                cellStyle.setFont(font_Normal);
 
-            cellStyle.setIndention( indient );
+                cellStyle.setIndention( indient );
 
-            cellStyle.setVerticalAlignment( VerticalAlignment.CENTER );
-    
-            cell.setCellStyle(cellStyle);
+                cellStyle.setVerticalAlignment( VerticalAlignment.CENTER );
+        
+                cell.setCellStyle(cellStyle);
 
-            if( tableManagers_row_N_cell_0.size() >= i && tableManagers_row_N_cell_0.get( i ) != -1 ){
+                if( tableManagers_row_N_cell_0.size() >= i && tableManagers_row_N_cell_0.get( i ) != -1 ){
 
-                XSSFDrawing drawing = sheet.createDrawingPatriarch();
+                    XSSFDrawing drawing = sheet.createDrawingPatriarch();
 
-                XSSFClientAnchor anchor = helper.createClientAnchor();
+                    XSSFClientAnchor anchor = helper.createClientAnchor();
 
-                anchor.setAnchorType( ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE );
+                    anchor.setAnchorType( ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE );
 
-                anchor.setCol1(0);
-                anchor.setRow1(lastRowNum);
-                anchor.setCol2(0);
-                anchor.setRow2(lastRowNum);
+                    anchor.setCol1(0);
+                    anchor.setRow1(lastRowNum);
+                    anchor.setCol2(0);
+                    anchor.setRow2(lastRowNum);
 
-                anchor.setDx2( Units.toEMU(57)  );
-                anchor.setDy2( Units.toEMU(57) );
+                    anchor.setDx2( Units.toEMU(57)  );
+                    anchor.setDy2( Units.toEMU(57) );
 
-                XSSFPicture pict = drawing.createPicture(anchor, tableManagers_row_N_cell_0.get( i ) );
+                    XSSFPicture pict = drawing.createPicture(anchor, tableManagers_row_N_cell_0.get( i ) );
 
-                pict.resize(scale, 1.0);
+                    pict.resize(scale, 1.0);
+
+                }
+
+                lastRowNum += 2;
 
             }
-
-            lastRowNum += 2;
 
         }
 
@@ -382,56 +407,61 @@ public class MySignListForExcel implements HttpHandler {
         // Создаем строки с Подписями и Инициалами Соисполнителей
 
         for (int i = 0; i < tableWorkgroup_row_N_cell_1.size(); i++) {
-            
-            XSSFRow row  = sheet.createRow( lastRowNum );            
-            
-            if( rightColumn > 0 )
-                sheet.addMergedRegion( new CellRangeAddress(
-                    lastRowNum, lastRowNum, 0, rightColumn
-            ));
-            
-            row.setHeight( height );
 
-            XSSFCell cell  = row.createCell(0);
+            String value = tableWorkgroup_row_N_cell_1.get( i );
 
-            cell.setCellType(CellType.STRING);
-    
-            cell.setCellValue( tableWorkgroup_row_N_cell_1.get( i ) );
-    
-            XSSFCellStyle cellStyle = workbook.createCellStyle();
-    
-            cellStyle.setFont(font_Normal);
+            if( !( value == null || value.isEmpty() || value.trim().isEmpty() ) ){
 
-            cellStyle.setIndention( indient );
+                XSSFRow row  = sheet.createRow( lastRowNum );            
+                
+                if( rightColumn > 0 )
+                    sheet.addMergedRegion( new CellRangeAddress(
+                        lastRowNum, lastRowNum, 0, rightColumn
+                ));
+                
+                row.setHeight( height );
 
-            cellStyle.setVerticalAlignment( VerticalAlignment.CENTER );
-    
-            cell.setCellStyle(cellStyle);
+                XSSFCell cell  = row.createCell(0);
 
-            if( tableWorkgroup_row_N_cell_0.size() >= i ){
+                cell.setCellType(CellType.STRING);
+        
+                cell.setCellValue( value );
+        
+                XSSFCellStyle cellStyle = workbook.createCellStyle();
+        
+                cellStyle.setFont(font_Normal);
 
-                XSSFDrawing drawing = sheet.createDrawingPatriarch();
+                cellStyle.setIndention( indient );
 
-                XSSFClientAnchor anchor = helper.createClientAnchor();
+                cellStyle.setVerticalAlignment( VerticalAlignment.CENTER );
+        
+                cell.setCellStyle(cellStyle);
 
-                anchor.setAnchorType( ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE );
+                if( tableWorkgroup_row_N_cell_0.size() >= i && tableWorkgroup_row_N_cell_0.get( i ) != -1  ){
 
-                anchor.setCol1(0);
-                anchor.setRow1(lastRowNum);
-                anchor.setCol2(0);
-                anchor.setRow2(lastRowNum);
+                    XSSFDrawing drawing = sheet.createDrawingPatriarch();
 
-                anchor.setDx2( Units.toEMU(57)  );
-                anchor.setDy2( Units.toEMU(57) );
+                    XSSFClientAnchor anchor = helper.createClientAnchor();
 
-                XSSFPicture pict = drawing.createPicture(anchor, tableWorkgroup_row_N_cell_0.get( i ) );
+                    anchor.setAnchorType( ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE );
 
-                pict.resize(scale, 1.0);
+                    anchor.setCol1(0);
+                    anchor.setRow1(lastRowNum);
+                    anchor.setCol2(0);
+                    anchor.setRow2(lastRowNum);
+
+                    anchor.setDx2( Units.toEMU(57)  );
+                    anchor.setDy2( Units.toEMU(57) );
+
+                    XSSFPicture pict = drawing.createPicture(anchor, tableWorkgroup_row_N_cell_0.get( i ) );
+
+                    pict.resize(scale, 1.0);
+
+                }
+
+                lastRowNum += 2;
 
             }
-
-            lastRowNum += 2;
-
         }
 
         // create footer
