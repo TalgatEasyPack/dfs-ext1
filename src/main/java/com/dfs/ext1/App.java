@@ -1,5 +1,6 @@
 package com.dfs.ext1;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
+import com.aspose.cells.Workbook;
+import com.aspose.pdf.SaveFormat;
 import com.dfs.ext1.Hadlers.MyHandlerActs;
 import com.dfs.ext1.Hadlers.MyHandlerActsSvod;
 import com.dfs.ext1.Hadlers.MySignListForExcel;
@@ -43,17 +46,17 @@ public final class App {
         server.setExecutor(null); // creates a default executor
         server.start();
 
-        //LoadTestFile();
+        LoadTestFile();
 
     }
 
-    public static void LoadTestFile() throws IOException{
+    public static void LoadTestFile() throws Exception{
 
         // ---------------------------
 
-        FileInputStream is_excel = new FileInputStream(new File( "C:\\temp\\1.xlsx"));
+        FileInputStream is_excel = new FileInputStream(new File( "H:\\temp\\1.xlsx"));
 
-        FileInputStream is_word = new FileInputStream(new File( "C:\\temp\\2.docx"));
+        FileInputStream is_word = new FileInputStream(new File( "H:\\temp\\2.docx"));
             
         // ---------------------------
         // Create files
@@ -76,11 +79,23 @@ public final class App {
 
         ByteArrayOutputStream bos = MySignListForExcel.mergeExcelAndWord(workbook, document);
 
-        FileOutputStream out_excel = new FileOutputStream( new File( "C:\\temp\\3.xlsx") );
+        FileOutputStream out_excel = new FileOutputStream( new File( "H:\\temp\\3.xlsx") );
 
         out_excel.write( bos.toByteArray() );
 
         out_excel.close();
+        
+        // ---------------------------
+
+        ByteArrayInputStream ios = new ByteArrayInputStream( bos.toByteArray() );
+
+        Workbook workbook2 = new Workbook( ios );
+
+        workbook2.save( "H:\\temp\\4.pdf", SaveFormat.Pdf );
+        
+        // ---------------------------
+
+        bos.close();
 
         // ---------------------------
         // Close files
