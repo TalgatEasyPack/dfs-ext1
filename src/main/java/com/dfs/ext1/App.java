@@ -43,7 +43,7 @@ public final class App {
         server.setExecutor(null); // creates a default executor
         server.start();
 
-        LoadTestFile();
+        //LoadTestFile();
 
     }
 
