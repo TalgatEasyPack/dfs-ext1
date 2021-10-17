@@ -247,19 +247,13 @@ public class MySignListForExcel implements HttpHandler {
         // Change Excel
         // ---------------------------
 
-        XSSFSheet sheet = workbook.getSheetAt(0);
-
-        XSSFCreationHelper helper = workbook.getCreationHelper();
-
         // size's
 
         Short height = 57 * 20;
         
-        Short indient = 9;                
-        
+        Short indient = 9;  
+            
         Double scale = 1.0;
-        if( sheet.getColumnWidth(0) == 2048 )
-            scale = 0.9;
 
         // create fonts
 
@@ -271,203 +265,218 @@ public class MySignListForExcel implements HttpHandler {
 
         font_Bold.setFontName(fontName);
         font_Bold.setBold( true );
-
-        // select last visible column in print area
-
-        int rightColumn = 0;
-        int cellWidth = sheet.getColumnWidth( rightColumn );
-
-        while( cellWidth < 10240 ){
-
-            rightColumn++;
-
-            cellWidth += sheet.getColumnWidth( rightColumn ) ;
-            
-        }
-
-        int rightColumnHead = 0;
-        cellWidth = sheet.getColumnWidth( rightColumnHead );
-
-        while( cellWidth < 16384 ){
-
-            rightColumnHead++;
-
-            cellWidth += sheet.getColumnWidth( rightColumnHead ) ;
-            
-        }
-
-        // Создаем строку с Наименованием позиции Отв. Исполнителей
-
-        int lastRowNum = sheet.getLastRowNum() + 1;
         
-        if( !( tableManagers_row_0_cell_0 == null || tableManagers_row_0_cell_0.isEmpty() || tableManagers_row_0_cell_0.trim().isEmpty() ) ){
+        for( int k = 0; k < workbook.getNumberOfSheets(); k++){
 
-            XSSFRow row  = sheet.createRow( lastRowNum );
+            XSSFSheet sheet = workbook.getSheetAt(k);
 
-            XSSFCell cell  = row.createCell(0);
+            XSSFCreationHelper helper = workbook.getCreationHelper();
 
-            cell.setCellType(CellType.STRING);
-    
-            cell.setCellValue(tableManagers_row_0_cell_0);
-    
-            XSSFCellStyle cellStyle  = workbook.createCellStyle();
-    
-            cellStyle.setFont(font_Bold);
-    
-            cell.setCellStyle(cellStyle);
-
-            lastRowNum += 2;
-
-        }
-
-        // Создаем строки с Подписями и Инициалами Отв. Исполнителей
-
-        for (int i = 0; i < tableManagers_row_N_cell_1.size(); i++) {
-
-            String value = tableManagers_row_N_cell_1.get( i );
-
-            if( !( value == null || value.isEmpty() || value.trim().isEmpty() ) ){
+            // size's               
             
-                XSSFRow row  = sheet.createRow( lastRowNum );            
+            scale = 1.0;
+
+            if( sheet.getColumnWidth(0) == 2048 )
+                scale = 0.9;
+
+            // select last visible column in print area
+
+            int rightColumn = 0;
+            int cellWidth = sheet.getColumnWidth( rightColumn );
+
+            while( cellWidth < 10240 ){
+
+                rightColumn++;
+
+                cellWidth += sheet.getColumnWidth( rightColumn ) ;
                 
-                if( rightColumn > 0 )
-                    sheet.addMergedRegion( new CellRangeAddress(
-                        lastRowNum, lastRowNum, 0, rightColumn
-                ));
+            }
+
+            int rightColumnHead = 0;
+            cellWidth = sheet.getColumnWidth( rightColumnHead );
+
+            while( cellWidth < 16384 ){
+
+                rightColumnHead++;
+
+                cellWidth += sheet.getColumnWidth( rightColumnHead ) ;
                 
-                row.setHeight( height );
+            }
+
+            // Создаем строку с Наименованием позиции Отв. Исполнителей
+
+            int lastRowNum = sheet.getLastRowNum() + 1;
+            
+            if( !( tableManagers_row_0_cell_0 == null || tableManagers_row_0_cell_0.isEmpty() || tableManagers_row_0_cell_0.trim().isEmpty() ) ){
+
+                XSSFRow row  = sheet.createRow( lastRowNum );
 
                 XSSFCell cell  = row.createCell(0);
 
                 cell.setCellType(CellType.STRING);
         
-                cell.setCellValue( tableManagers_row_N_cell_1.get( i ) );
+                cell.setCellValue(tableManagers_row_0_cell_0);
         
-                XSSFCellStyle cellStyle = workbook.createCellStyle();
+                XSSFCellStyle cellStyle  = workbook.createCellStyle();
         
-                cellStyle.setFont(font_Normal);
-
-                cellStyle.setIndention( indient );
-
-                cellStyle.setVerticalAlignment( VerticalAlignment.CENTER );
+                cellStyle.setFont(font_Bold);
         
                 cell.setCellStyle(cellStyle);
-
-                if( tableManagers_row_N_cell_0.size() >= i && tableManagers_row_N_cell_0.get( i ) != -1 ){
-
-                    XSSFDrawing drawing = sheet.createDrawingPatriarch();
-
-                    XSSFClientAnchor anchor = helper.createClientAnchor();
-
-                    anchor.setAnchorType( ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE );
-
-                    anchor.setCol1(0);
-                    anchor.setRow1(lastRowNum);
-                    anchor.setCol2(0);
-                    anchor.setRow2(lastRowNum);
-
-                    anchor.setDx2( Units.toEMU(57)  );
-                    anchor.setDy2( Units.toEMU(57) );
-
-                    XSSFPicture pict = drawing.createPicture(anchor, tableManagers_row_N_cell_0.get( i ) );
-
-                    pict.resize(scale, 1.0);
-
-                }
 
                 lastRowNum += 2;
 
             }
 
-        }
+            // Создаем строки с Подписями и Инициалами Отв. Исполнителей
 
-        // Создаем строку с Наименованием позиции Соисполнителей
-        
-        if( !( tableWorkgroup_row_0_cell_0 == null || tableWorkgroup_row_0_cell_0.isEmpty() || tableWorkgroup_row_0_cell_0.trim().isEmpty() ) ){
+            for (int i = 0; i < tableManagers_row_N_cell_1.size(); i++) {
 
-            XSSFRow row  = sheet.createRow( lastRowNum );
+                String value = tableManagers_row_N_cell_1.get( i );
 
-            XSSFCell cell  = row.createCell(0);
-
-            cell.setCellType(CellType.STRING);
-    
-            cell.setCellValue(tableWorkgroup_row_0_cell_0);
-    
-            XSSFCellStyle cellStyle  = workbook.createCellStyle();
-    
-            cellStyle.setFont(font_Bold);
-    
-            cell.setCellStyle(cellStyle);
-
-            lastRowNum += 2;
-
-        }
-
-        // Создаем строки с Подписями и Инициалами Соисполнителей
-
-        for (int i = 0; i < tableWorkgroup_row_N_cell_1.size(); i++) {
-
-            String value = tableWorkgroup_row_N_cell_1.get( i );
-
-            if( !( value == null || value.isEmpty() || value.trim().isEmpty() ) ){
-
-                XSSFRow row  = sheet.createRow( lastRowNum );            
+                if( !( value == null || value.isEmpty() || value.trim().isEmpty() ) ){
                 
-                if( rightColumn > 0 )
-                    sheet.addMergedRegion( new CellRangeAddress(
-                        lastRowNum, lastRowNum, 0, rightColumn
-                ));
-                
-                row.setHeight( height );
+                    XSSFRow row  = sheet.createRow( lastRowNum );            
+                    
+                    if( rightColumn > 0 )
+                        sheet.addMergedRegion( new CellRangeAddress(
+                            lastRowNum, lastRowNum, 0, rightColumn
+                    ));
+                    
+                    row.setHeight( height );
+
+                    XSSFCell cell  = row.createCell(0);
+
+                    cell.setCellType(CellType.STRING);
+            
+                    cell.setCellValue( tableManagers_row_N_cell_1.get( i ) );
+            
+                    XSSFCellStyle cellStyle = workbook.createCellStyle();
+            
+                    cellStyle.setFont(font_Normal);
+
+                    cellStyle.setIndention( indient );
+
+                    cellStyle.setVerticalAlignment( VerticalAlignment.CENTER );
+            
+                    cell.setCellStyle(cellStyle);
+
+                    if( tableManagers_row_N_cell_0.size() >= i && tableManagers_row_N_cell_0.get( i ) != -1 ){
+
+                        XSSFDrawing drawing = sheet.createDrawingPatriarch();
+
+                        XSSFClientAnchor anchor = helper.createClientAnchor();
+
+                        anchor.setAnchorType( ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE );
+
+                        anchor.setCol1(0);
+                        anchor.setRow1(lastRowNum);
+                        anchor.setCol2(0);
+                        anchor.setRow2(lastRowNum);
+
+                        anchor.setDx2( Units.toEMU(57)  );
+                        anchor.setDy2( Units.toEMU(57) );
+
+                        XSSFPicture pict = drawing.createPicture(anchor, tableManagers_row_N_cell_0.get( i ) );
+
+                        pict.resize(scale, 1.0);
+
+                    }
+
+                    lastRowNum += 2;
+
+                }
+
+            }
+
+            // Создаем строку с Наименованием позиции Соисполнителей
+            
+            if( !( tableWorkgroup_row_0_cell_0 == null || tableWorkgroup_row_0_cell_0.isEmpty() || tableWorkgroup_row_0_cell_0.trim().isEmpty() ) ){
+
+                XSSFRow row  = sheet.createRow( lastRowNum );
 
                 XSSFCell cell  = row.createCell(0);
 
                 cell.setCellType(CellType.STRING);
         
-                cell.setCellValue( value );
+                cell.setCellValue(tableWorkgroup_row_0_cell_0);
         
-                XSSFCellStyle cellStyle = workbook.createCellStyle();
+                XSSFCellStyle cellStyle  = workbook.createCellStyle();
         
-                cellStyle.setFont(font_Normal);
-
-                cellStyle.setIndention( indient );
-
-                cellStyle.setVerticalAlignment( VerticalAlignment.CENTER );
+                cellStyle.setFont(font_Bold);
         
                 cell.setCellStyle(cellStyle);
-
-                if( tableWorkgroup_row_N_cell_0.size() >= i && tableWorkgroup_row_N_cell_0.get( i ) != -1  ){
-
-                    XSSFDrawing drawing = sheet.createDrawingPatriarch();
-
-                    XSSFClientAnchor anchor = helper.createClientAnchor();
-
-                    anchor.setAnchorType( ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE );
-
-                    anchor.setCol1(0);
-                    anchor.setRow1(lastRowNum);
-                    anchor.setCol2(0);
-                    anchor.setRow2(lastRowNum);
-
-                    anchor.setDx2( Units.toEMU(57)  );
-                    anchor.setDy2( Units.toEMU(57) );
-
-                    XSSFPicture pict = drawing.createPicture(anchor, tableWorkgroup_row_N_cell_0.get( i ) );
-
-                    pict.resize(scale, 1.0);
-
-                }
 
                 lastRowNum += 2;
 
             }
+
+            // Создаем строки с Подписями и Инициалами Соисполнителей
+
+            for (int i = 0; i < tableWorkgroup_row_N_cell_1.size(); i++) {
+
+                String value = tableWorkgroup_row_N_cell_1.get( i );
+
+                if( !( value == null || value.isEmpty() || value.trim().isEmpty() ) ){
+
+                    XSSFRow row  = sheet.createRow( lastRowNum );            
+                    
+                    if( rightColumn > 0 )
+                        sheet.addMergedRegion( new CellRangeAddress(
+                            lastRowNum, lastRowNum, 0, rightColumn
+                    ));
+                    
+                    row.setHeight( height );
+
+                    XSSFCell cell  = row.createCell(0);
+
+                    cell.setCellType(CellType.STRING);
+            
+                    cell.setCellValue( value );
+            
+                    XSSFCellStyle cellStyle = workbook.createCellStyle();
+            
+                    cellStyle.setFont(font_Normal);
+
+                    cellStyle.setIndention( indient );
+
+                    cellStyle.setVerticalAlignment( VerticalAlignment.CENTER );
+            
+                    cell.setCellStyle(cellStyle);
+
+                    if( tableWorkgroup_row_N_cell_0.size() >= i && tableWorkgroup_row_N_cell_0.get( i ) != -1  ){
+
+                        XSSFDrawing drawing = sheet.createDrawingPatriarch();
+
+                        XSSFClientAnchor anchor = helper.createClientAnchor();
+
+                        anchor.setAnchorType( ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE );
+
+                        anchor.setCol1(0);
+                        anchor.setRow1(lastRowNum);
+                        anchor.setCol2(0);
+                        anchor.setRow2(lastRowNum);
+
+                        anchor.setDx2( Units.toEMU(57)  );
+                        anchor.setDy2( Units.toEMU(57) );
+
+                        XSSFPicture pict = drawing.createPicture(anchor, tableWorkgroup_row_N_cell_0.get( i ) );
+
+                        pict.resize(scale, 1.0);
+
+                    }
+
+                    lastRowNum += 2;
+
+                }
+            }
+
+            // create footer
+    
+            Footer footerExcel = sheet.getFooter();
+    
+            footerExcel.setLeft( HSSFFooter.fontSize( (short) 8 ) + footerWord );
+
         }
-
-        // create footer
-
-        Footer footerExcel = sheet.getFooter();
-
-        footerExcel.setLeft( HSSFFooter.fontSize( (short) 8 ) + footerWord );
 
         // ---------------------------
         // Create result
