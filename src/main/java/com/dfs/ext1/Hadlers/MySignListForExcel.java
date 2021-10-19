@@ -243,7 +243,7 @@ public class MySignListForExcel implements HttpHandler {
         }
         //---------------------------------------------------------------------------------------------------------------------------
 
-        String footerWord = document.getFooterArray(0).getText();
+        //String footerWord = document.getFooterArray(0).getText();
 
         // ---------------------------
         // Change Excel
@@ -478,11 +478,11 @@ public class MySignListForExcel implements HttpHandler {
             }
 
             // create footer
-    
+            /*
             Footer footerExcel = sheet.getFooter();
     
             footerExcel.setLeft( HSSFFooter.fontSize( (short) 8 ) + footerWord );
-
+            */
         }
 
         // ---------------------------
