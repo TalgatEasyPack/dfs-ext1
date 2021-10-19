@@ -25,7 +25,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
 public final class App {
 
-    private static String version = "1.0.004";
+    private static String version = "1.0.005";
 
     private App() {
     }
