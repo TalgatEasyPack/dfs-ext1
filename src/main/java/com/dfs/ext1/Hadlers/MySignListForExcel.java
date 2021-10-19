@@ -18,6 +18,7 @@ import com.sun.net.httpserver.HttpHandler;
 import org.apache.poi.hssf.usermodel.HSSFFooter;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Footer;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -29,6 +30,7 @@ import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
 import org.apache.poi.xssf.usermodel.XSSFCreationHelper;
 import org.apache.poi.xssf.usermodel.XSSFDrawing;
 import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFPicture;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -265,10 +267,15 @@ public class MySignListForExcel implements HttpHandler {
 
         font_Bold.setFontName(fontName);
         font_Bold.setBold( true );
+
+        XSSFFormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+        DataFormatter formatter = new DataFormatter( true );
         
         for( int k = 0; k < workbook.getNumberOfSheets(); k++){
 
             XSSFSheet sheet = workbook.getSheetAt(k);
+            
+            //----------
 
             XSSFCreationHelper helper = workbook.getCreationHelper();
 
@@ -305,7 +312,7 @@ public class MySignListForExcel implements HttpHandler {
 
             // Создаем строку с Наименованием позиции Отв. Исполнителей
 
-            int lastRowNum = sheet.getLastRowNum() + 1;
+            int lastRowNum = determineRowCount( evaluator, formatter, sheet) + 1;
             
             if( !( tableManagers_row_0_cell_0 == null || tableManagers_row_0_cell_0.isEmpty() || tableManagers_row_0_cell_0.trim().isEmpty() ) ){
 
@@ -499,5 +506,73 @@ public class MySignListForExcel implements HttpHandler {
         // ---------------------------
 
     }
+    private static int determineRowCount( XSSFFormulaEvaluator evaluator, DataFormatter formatter, XSSFSheet sheet)
+    {
+        int lastRowIndex = -1;
 
+        if( sheet.getPhysicalNumberOfRows() > 0 )
+        {
+            // getLastRowNum() actually returns an index, not a row number
+            lastRowIndex = sheet.getLastRowNum();
+    
+            // now, start at end of spreadsheet and work our way backwards until we find a row having data
+            for( ; lastRowIndex >= 0; lastRowIndex-- )
+            {
+                XSSFRow row = sheet.getRow( lastRowIndex );
+                if( !isRowEmpty( evaluator, formatter, row ) )
+                {
+                    break;
+                }
+            }
+        }
+        return lastRowIndex;
+    }
+    
+    /**
+     * Determine whether a row is effectively completely empty - i.e. all cells either contain an empty string or nothing.
+     */
+    private static boolean isRowEmpty( XSSFFormulaEvaluator evaluator, DataFormatter formatter, XSSFRow row )
+    {
+        if( row == null ){
+            return true;
+        }
+    
+        int cellCount = row.getLastCellNum() + 1;
+        for( int i = 0; i < cellCount; i++ ){
+            String cellValue = getCellValue( evaluator, formatter, row, i );
+            if( cellValue != null && cellValue.length() > 0 ){
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Get the effective value of a cell, formatted according to the formatting of the cell.
+     * If the cell contains a formula, it is evaluated first, then the result is formatted.
+     * 
+     * @param row the row
+     * @param columnIndex the cell's column index
+     * @return the cell's value
+     */
+    private static String getCellValue( XSSFFormulaEvaluator evaluator, DataFormatter formatter, XSSFRow  row, int columnIndex )
+    {
+        String cellValue;
+        XSSFCell cell = row.getCell( columnIndex );
+        if( cell == null ){
+            // no data in this cell
+            cellValue = null;
+        }
+        else{
+            if( cell.getCellType() != CellType.FORMULA ){
+                // cell has a value, so format it into a string
+                cellValue = formatter.formatCellValue( cell );
+            }
+            else {
+                // cell has a formula, so evaluate it
+                cellValue = formatter.formatCellValue( cell, evaluator );
+            }
+        }
+        return cellValue;
+    }
 }

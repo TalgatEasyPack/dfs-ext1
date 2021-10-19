@@ -5,7 +5,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import com.aspose.cells.Workbook;
@@ -54,9 +53,9 @@ public final class App {
 
         // ---------------------------
 
-        FileInputStream is_excel = new FileInputStream(new File( "H:\\temp\\1.xlsx"));
+        FileInputStream is_excel = new FileInputStream(new File( "D:\\temp\\1.xlsx"));
 
-        FileInputStream is_word = new FileInputStream(new File( "H:\\temp\\2.docx"));
+        FileInputStream is_word = new FileInputStream(new File( "D:\\temp\\2.docx"));
             
         // ---------------------------
         // Create files
@@ -79,7 +78,7 @@ public final class App {
 
         ByteArrayOutputStream bos = MySignListForExcel.mergeExcelAndWord(workbook, document);
 
-        FileOutputStream out_excel = new FileOutputStream( new File( "H:\\temp\\3.xlsx") );
+        FileOutputStream out_excel = new FileOutputStream( new File( "D:\\temp\\3.xlsx") );
 
         out_excel.write( bos.toByteArray() );
 
@@ -91,7 +90,7 @@ public final class App {
 
         Workbook workbook2 = new Workbook( ios );
 
-        workbook2.save( "H:\\temp\\4.pdf", SaveFormat.Pdf );
+        workbook2.save( "D:\\temp\\4.pdf", SaveFormat.Pdf );
         
         // ---------------------------
 
