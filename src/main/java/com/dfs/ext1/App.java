@@ -7,8 +7,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.InetSocketAddress;
 
-import com.aspose.cells.Workbook;
-import com.aspose.pdf.SaveFormat;
+// import com.aspose.cells.Workbook;
+// import com.aspose.pdf.SaveFormat;
 import com.dfs.ext1.Hadlers.MyHandlerActs;
 import com.dfs.ext1.Hadlers.MyHandlerActsSvod;
 import com.dfs.ext1.Hadlers.MySignListForExcel;
@@ -45,7 +45,7 @@ public final class App {
         server.setExecutor(null); // creates a default executor
         server.start();
 
-        LoadTestFile();
+        // LoadTestFile();
 
     }
 
@@ -88,9 +88,9 @@ public final class App {
 
         ByteArrayInputStream ios = new ByteArrayInputStream( bos.toByteArray() );
 
-        Workbook workbook2 = new Workbook( ios );
+        // Workbook workbook2 = new Workbook( ios );
 
-        workbook2.save( "D:\\temp\\4.pdf", SaveFormat.Pdf );
+        // workbook2.save( "D:\\temp\\4.pdf", SaveFormat.Pdf );
         
         // ---------------------------
 

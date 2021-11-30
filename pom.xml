@@ -22,13 +22,13 @@
     <jacoco.unit-tests.limit.class-complexity>20</jacoco.unit-tests.limit.class-complexity>
     <jacoco.unit-tests.limit.method-complexity>5</jacoco.unit-tests.limit.method-complexity>
   </properties>
-  <repositories>
+  <!-- <repositories>
     <repository>
       <id>AsposeJavaAPI</id>
       <name>Aspose Java API</name>
       <url>https://repository.aspose.com/repo/</url>
     </repository>
-  </repositories>
+  </repositories> -->
   <dependencies>
 
     <dependency>
@@ -59,7 +59,7 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
+    <!-- <dependency>
         <groupId>com.aspose</groupId>
         <artifactId>aspose-pdf</artifactId>
         <version>21.9</version>
@@ -76,7 +76,7 @@
         <artifactId>aspose-cells</artifactId>
         <version>21.10</version>
         <classifier>javadoc</classifier>
-    </dependency>
+    </dependency> -->
 
     <dependency>
         <groupId>org.bouncycastle</groupId>
