@@ -42,6 +42,7 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBr;
 
 enum RowRecordType {
     DOCUMENT,
@@ -246,27 +247,9 @@ public class MySignListForExcel2 implements HttpHandler {
 
                     for (int j = 0; j < lParagraphs.size(); j++) {
 
-                        String line = "";
+                        String line = lParagraphs.get(j).getText();
 
-                        for (XWPFRun tableCellParagraphRun : lParagraphs.get(j).getRuns()) {
-
-                            String s = tableCellParagraphRun.getText(0);
-
-                            if( !( s == null || s.isEmpty() || s.trim().isEmpty() ) ){
-
-                                if( tableCellParagraphRun.getCTR().getBrList().size() > 0 ){
-                                    
-                                    line += "\n";
-
-                                }
-
-                                line += s;
-
-                            }
-
-                        }
-
-                        if( line.isEmpty() == false ){
+                        if( !( line == null || line.isEmpty() || line.trim().isEmpty() ) ){
 
                             text.add( line );
 
