@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import com.dfs.ext1.Hadlers.MyHandlerActs;
 import com.dfs.ext1.Hadlers.MyHandlerActsSvod;
 import com.dfs.ext1.Hadlers.MySignListForExcel;
+import com.dfs.ext1.Hadlers.MySignListForExcel2;
 import com.dfs.ext1.Hadlers.PingHandler;
 import com.dfs.ext1.Hadlers.VersionHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -41,11 +42,13 @@ public final class App {
         server.createContext("/version", new VersionHandler( version ));
         server.createContext("/acts", new MyHandlerActs());
         server.createContext("/actsSvod", new MyHandlerActsSvod());
-        server.createContext("/signListForExcel", new MySignListForExcel());
+        server.createContext("/signListForExcel", new MySignListForExcel2());
         server.setExecutor(null); // creates a default executor
         server.start();
 
         // LoadTestFile();
+
+        // System.out.println("Выполнено слияние MySignListForExcel2");
 
     }
 
@@ -76,7 +79,7 @@ public final class App {
         // Create Stream for responce
         // ---------------------------
 
-        ByteArrayOutputStream bos = MySignListForExcel.mergeExcelAndWord(workbook, document);
+        ByteArrayOutputStream bos = MySignListForExcel2.mergeExcelAndWord(workbook, document);
 
         FileOutputStream out_excel = new FileOutputStream( new File( "D:\\temp\\3.xlsx") );
 
@@ -86,7 +89,7 @@ public final class App {
         
         // ---------------------------
 
-        ByteArrayInputStream ios = new ByteArrayInputStream( bos.toByteArray() );
+        //ByteArrayInputStream ios = new ByteArrayInputStream( bos.toByteArray() );
 
         // Workbook workbook2 = new Workbook( ios );
 

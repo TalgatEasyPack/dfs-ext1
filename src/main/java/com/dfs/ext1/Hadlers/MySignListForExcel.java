@@ -145,6 +145,8 @@ public class MySignListForExcel implements HttpHandler {
 
         //---------------------------------------------------------------------------------------------------------------------------
         // Таблица отв. исполнителей
+        //---------------------------------------------------------------------------------------------------------------------------
+
         XWPFTable tableManagers;
         String tableManagers_row_0_cell_0 = null;
         List<Integer> tableManagers_row_N_cell_0  = new ArrayList<Integer>();   // Подпись отв. исполнителей
@@ -192,11 +194,9 @@ public class MySignListForExcel implements HttpHandler {
 
         }
 
-
         //---------------------------------------------------------------------------------------------------------------------------
-
+        // Таблица исполнителей
         //---------------------------------------------------------------------------------------------------------------------------
-        // Таблица отв. исполнителей
 
         XWPFTable tableWorkgroup;
         String tableWorkgroup_row_0_cell_0 = null;
@@ -506,6 +506,7 @@ public class MySignListForExcel implements HttpHandler {
         // ---------------------------
 
     }
+
     private static int determineRowCount( XSSFFormulaEvaluator evaluator, DataFormatter formatter, XSSFSheet sheet)
     {
         int lastRowIndex = -1;
