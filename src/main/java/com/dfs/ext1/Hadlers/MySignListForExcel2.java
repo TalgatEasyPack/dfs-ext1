@@ -42,7 +42,6 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBr;
 
 enum RowRecordType {
     DOCUMENT,
@@ -56,7 +55,7 @@ enum ReadPlace {
     TOP, BOTTOM
 }
 
-class RowRecord{
+class RowRecord {
     public RowRecordType type;
     public String text = "";
     public Integer qr_code;
@@ -88,7 +87,7 @@ public class MySignListForExcel2 implements HttpHandler {
             byte[] decoded_word = Base64.getDecoder().decode(requestBody.base64_word);
 
             InputStream is_word = new ByteArrayInputStream(decoded_word);
-            
+
             // ---------------------------
             // Create files
             // ---------------------------
@@ -155,436 +154,7 @@ public class MySignListForExcel2 implements HttpHandler {
     }
 
     public static ByteArrayOutputStream mergeExcelAndWord(XSSFWorkbook workbook, XWPFDocument document)
-    throws IOException {
-
-        //---------------------------------------------------------------------------------------------------------------------------
-        // Пересматриваем Word документ
-        //---------------------------------------------------------------------------------------------------------------------------
-
-        List<IBodyElement> bodyElements = document.getBodyElements();// Список рассматриваемых элементов
-        List<RowRecord> rowRecords_Top = new ArrayList<RowRecord>();// Список считываемых элементов
-        List<RowRecord> rowRecords_Bottom = new ArrayList<RowRecord>();// Список считываемых элементов
-        ReadPlace readPlace = ReadPlace.TOP;// Точка чтения - Выше или ниже вклеиваемого документа
-
-        // Пересматриваем Word документ
-        for (IBodyElement iBodyElement : bodyElements) {
-
-            if( iBodyElement instanceof XWPFTable){// Если элемент - Таблица
-
-                XWPFTable table = (XWPFTable) iBodyElement;
-
-                // Пересматриваемы строки в таблице
-                for (int i = 0; i < table.getNumberOfRows() ; i++) {
-
-                    XWPFTableRow tableRow = table.getRow( i );
-
-                    // Получаем список ячеек в строке
-                    List<XWPFTableCell> tableCells = tableRow.getTableCells();
-
-                    // Создаем новую запись о считанном элементе
-                    RowRecord rowRecord = new RowRecord();
-
-                    // Предопределяем строку, для извлечения текста - перед склеивымым документом она слева
-                    XWPFTableCell tableCell = tableCells.get(0);
-
-                    if( tableCells.size() == 1 ){ // Если строка - обычный текст
-
-                        rowRecord.type = RowRecordType.TEXT_ROW;
-
-                    }else if( tableCells.size() == 2 ){ // Если строка - данные о подписи
-
-                        rowRecord.type = RowRecordType.SIGN_ROW;
-
-                        // Предопределяем ячейку для извлечения QR кода - перед склеивымым документом она справа
-                        XWPFTableCell imageTableCell = tableCells.get(1);
-
-                        // Пересматриваем точки ввода инфы в зависимости от точки чтения
-                        if( readPlace == ReadPlace.BOTTOM ){
-
-                            // Предопределяем ячейку для извлечения QR кода - после склеиваемого документа она справа
-                            tableCell = tableCells.get(1);
-
-                            // Предопределяем ячейку для извлечения QR кода - после склеиваемого документа она слева
-                            imageTableCell = tableCells.get(0);
-
-                        }
-
-                        //--------------------------------------------------
-                        // Извлечение QR кода
-                        //--------------------------------------------------
-
-                        List<XWPFParagraph> lParagraphs = imageTableCell.getParagraphs();
-
-                        if( lParagraphs.size() > 0 ){
-
-                            List<XWPFRun> lRuns = lParagraphs.get(0).getRuns();
-
-                            if( lRuns.size() > 0 ){
-
-                                List<XWPFPicture> lPictures = lRuns.get(0).getEmbeddedPictures();
-
-                                if( lPictures.size() > 0 ){
-
-                                    rowRecord.qr_code = workbook.addPicture( lPictures.get(0).getPictureData().getData(), Workbook.PICTURE_TYPE_PNG) ;
-
-                                }
-
-                            }
-
-                        }
-
-                        //--------------------------------------------------
-
-                    }
-
-                    //--------------------------------------------------
-                    // Извлечение текста
-                    //--------------------------------------------------
-
-                    List<XWPFParagraph> lParagraphs = tableCell.getParagraphs();
-
-                    List<String> text = new ArrayList<String>();
-
-                    for (int j = 0; j < lParagraphs.size(); j++) {
-
-                        String line = lParagraphs.get(j).getText();
-
-                        if( !( line == null || line.isEmpty() || line.trim().isEmpty() ) ){
-
-                            text.add( line );
-
-                        }
-
-                    }
-
-                    for (int j = 0; j < text.size(); j++) {
-
-                        rowRecord.text += text.get(j);
-
-                        if( j + 1 < text.size() ){
-
-                            rowRecord.text += "\n";
-
-                        }
-
-                    }
-
-                    //--------------------------------------------------
-
-                    // Добавляем данные об элементе
-                    if( readPlace == ReadPlace.TOP){
-
-                        rowRecords_Top.add( rowRecord );
-
-                    }else{
-
-                        rowRecords_Bottom.add( rowRecord );
-
-                    }
-
-                }
-
-            }else if( iBodyElement instanceof XWPFParagraph ){// Если элемент - Текстовая строка
-
-                XWPFParagraph paragraph = (XWPFParagraph)iBodyElement;
-
-                // Если данные - поле слияния - накидываем отметки об этом
-                if( paragraph.getCTP().toString().contains("MERGEFIELD") ){
-
-                    // Меняем отметку о мечте чтения - после вклеимового документа
-                    readPlace = ReadPlace.BOTTOM;
-
-                }
-
-            }
-
-        }
-
-        //---------------------------------------------------------------------------------------------------------------------------
-        // Подготавливаем данные для редакции Excel
-        //---------------------------------------------------------------------------------------------------------------------------
-
-        Short height = 57 * 20;
-        
-        Short indient = 9;  
-            
-        Double scale = 1.0;
-
-        // ---------------------------
-
-        XSSFFont font_Normal = workbook.createFont();
-
-        String fontName = "Times New Roman";
-
-        font_Normal.setFontName(fontName);
-
-        XSSFFont font_Bold = workbook.createFont();
-
-        font_Bold.setFontName(fontName);
-        font_Bold.setBold( true );
-
-        // ---------------------------
-
-        XSSFFormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-        DataFormatter formatter = new DataFormatter( true );
-
-        //---------------------------------------------------------------------------------------------------------------------------
-        // Изменяем Excel докумет
-        //---------------------------------------------------------------------------------------------------------------------------
-        
-        for( int i = 0; i < workbook.getNumberOfSheets(); i++){
-
-            //---------------------------------------------------------------------------------------------------------------------------
-            // Подготавливаем данные для изменения листа документа
-            //---------------------------------------------------------------------------------------------------------------------------
-
-            XSSFSheet sheet = workbook.getSheetAt(i);
-            
-            // ---------------------------
-
-            XSSFCreationHelper helper = workbook.getCreationHelper();
-
-            // ---------------------------       
-            
-            scale = 1.0;
-
-            if( sheet.getColumnWidth(0) == 2048 )
-                scale = 0.9;
-
-            // select last visible column in print area
-
-            int rightColumn = 0;
-            int cellWidth = sheet.getColumnWidth( rightColumn );
-
-            while( cellWidth < 10240 ){
-
-                rightColumn++;
-
-                cellWidth += sheet.getColumnWidth( rightColumn ) ;
-                
-            }
-
-            int rightColumnHead = 0;
-            cellWidth = sheet.getColumnWidth( rightColumnHead );
-
-            while( cellWidth < 16384 ){
-
-                rightColumnHead++;
-
-                cellWidth += sheet.getColumnWidth( rightColumnHead ) ;
-                
-            }
-
-            int lastRowNum = determineRowCount( evaluator, formatter, sheet);
-
-            //---------------------------------------------------------------------------------------------------------------------------
-            // Изменяем лист документа
-            //---------------------------------------------------------------------------------------------------------------------------
-
-            for ( int j = rowRecords_Top.size()-1; j >= 0; j-- ) {
-
-                RowRecord rowRecord = rowRecords_Top.get(j);
-
-                if( rowRecord.type == RowRecordType.TEXT_ROW && rowRecord.text.isEmpty() == false ){
-
-                    sheet.shiftRows(sheet.getFirstRowNum(), lastRowNum, 1 );
-
-                    XSSFRow row  = sheet.createRow(0);
-
-                    XSSFCell cell  = row.createCell(0);
-        
-                    cell.setCellType(CellType.STRING);
-            
-                    cell.setCellValue( rowRecord.text );
-            
-                    XSSFCellStyle cellStyle  = workbook.createCellStyle();
-            
-                    cellStyle.setFont(font_Normal);
-                    
-                    cellStyle.setWrapText(true);
-            
-                    cellStyle.setAlignment( HorizontalAlignment.RIGHT );
-            
-                    cell.setCellStyle(cellStyle);
-        
-                    if( rightColumn > 0 )
-                        sheet.addMergedRegion( new CellRangeAddress(
-                            0, 0, 0, rightColumnHead
-                        ));
-        
-                    int numberOfLines = rowRecord.text.split("\n").length + 1;
-        
-                    row.setHeightInPoints( numberOfLines * sheet.getDefaultRowHeightInPoints() );
-
-                    lastRowNum += 1;
-
-                }else if( rowRecord.type == RowRecordType.SIGN_ROW && ( rowRecord.text.isEmpty() == false || rowRecord.qr_code != null ) ){
-
-                    sheet.shiftRows(sheet.getFirstRowNum(), lastRowNum, 1 );
-
-                    XSSFRow row  = sheet.createRow(0);
-
-                    if( rightColumn > 0 )
-                    sheet.addMergedRegion( new CellRangeAddress(
-                        0, 0, 0, rightColumnHead
-                    ));
-
-                    row.setHeight( height );
-
-                    if( rowRecord.text.isEmpty() == false ){
-
-                        XSSFCell cell  = row.createCell(0);
-            
-                        cell.setCellType(CellType.STRING);
-                
-                        cell.setCellValue( rowRecord.text );
-                
-                        XSSFCellStyle cellStyle  = workbook.createCellStyle();
-                
-                        cellStyle.setFont(font_Normal);
-                        
-                        cellStyle.setWrapText(true);
-                
-                        cellStyle.setAlignment( HorizontalAlignment.RIGHT );
-                        
-                        cellStyle.setVerticalAlignment( VerticalAlignment.CENTER );
-            
-                        cellStyle.setIndention( indient );
-                
-                        cell.setCellStyle( cellStyle );
-
-                        int numberOfLines = rowRecord.text.split("\n").length + 1;
-        
-                        if( numberOfLines > 4 ){
-
-                            row.setHeightInPoints( numberOfLines * sheet.getDefaultRowHeightInPoints() );
-                            
-                        }
-
-                    }
-
-                    if( rowRecord.qr_code != null ){
-
-                        XSSFDrawing drawing = sheet.createDrawingPatriarch();
-
-                        XSSFClientAnchor anchor = helper.createClientAnchor();
-        
-                        anchor.setAnchorType( ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE );
-        
-                        anchor.setCol1( rightColumnHead+1 );
-                        anchor.setRow1(1);
-                        anchor.setCol2( rightColumnHead+1 );
-                        anchor.setRow2(1);
-        
-                        anchor.setDx1( sheet.getColumnWidth( rightColumnHead+1 ) - Units.toEMU(57) );
-                        anchor.setDy1( Units.toEMU( 0 ) );
-        
-                        anchor.setDx2( sheet.getColumnWidth( rightColumnHead+1 )  );
-                        anchor.setDy2( Units.toEMU(57) );
-        
-                        drawing.createPicture( anchor, rowRecord.qr_code );
-
-                    }
-
-                    lastRowNum += 1;
-
-                }
-            }
-            
-            for ( int j = 0; j < rowRecords_Bottom.size(); j++ ) {
-
-                RowRecord rowRecord = rowRecords_Bottom.get(j);
-
-                if( rowRecord.type == RowRecordType.TEXT_ROW && rowRecord.text.isEmpty() == false ){
-
-                    XSSFRow row  = sheet.createRow( lastRowNum );
-
-                    XSSFCell cell  = row.createCell(0);
-    
-                    cell.setCellType(CellType.STRING);
-            
-                    cell.setCellValue(rowRecord.text);
-            
-                    XSSFCellStyle cellStyle  = workbook.createCellStyle();
-            
-                    cellStyle.setFont(font_Bold);
-            
-                    cell.setCellStyle(cellStyle);
-
-                    lastRowNum += 1;
-
-                }else if( rowRecord.type == RowRecordType.SIGN_ROW && ( rowRecord.text.isEmpty() == false || rowRecord.qr_code != null ) ){
-
-                    XSSFRow row  = sheet.createRow( lastRowNum );
-
-                    if( rightColumn > 0 )
-                        sheet.addMergedRegion( new CellRangeAddress(
-                            lastRowNum, lastRowNum, 0, rightColumn
-                    ));
-
-                    row.setHeight( height );
-
-                    if( rowRecord.text.isEmpty() == false ){
-
-                        XSSFCell cell  = row.createCell(0);
-    
-                        cell.setCellType(CellType.STRING);
-                
-                        cell.setCellValue( rowRecord.text );
-                
-                        XSSFCellStyle cellStyle = workbook.createCellStyle();
-                
-                        cellStyle.setFont(font_Normal);
-                        
-                        cellStyle.setWrapText(true);
-    
-                        cellStyle.setIndention( indient );
-    
-                        cellStyle.setVerticalAlignment( VerticalAlignment.CENTER );
-                
-                        cell.setCellStyle(cellStyle);
-
-                        int numberOfLines = rowRecord.text.split("\n").length + 1;
-        
-                        if( numberOfLines > 5 ){
-
-                            row.setHeightInPoints( numberOfLines * sheet.getDefaultRowHeightInPoints() );
-
-                        }
-
-                    }                    
-                    
-                    if( rowRecord.qr_code != null ){
-
-                        XSSFDrawing drawing = sheet.createDrawingPatriarch();
-
-                        XSSFClientAnchor anchor = helper.createClientAnchor();
-
-                        anchor.setAnchorType( ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE );
-
-                        anchor.setCol1(0);
-                        anchor.setRow1(lastRowNum);
-                        anchor.setCol2(0);
-                        anchor.setRow2(lastRowNum);
-
-                        anchor.setDx2( Units.toEMU(57)  );
-                        anchor.setDy2( Units.toEMU(57) );
-
-                        XSSFPicture pict = drawing.createPicture(anchor, rowRecord.qr_code );
-
-                        pict.resize(scale, 1.0);
-
-                    }
-
-                    lastRowNum += 2;
-
-                }
-
-            }
-
-            //---------------------------------------------------------------------------------------------------------------------------
-
-        }
+            throws IOException {
 
         // ---------------------------
         // Create result
@@ -592,10 +162,450 @@ public class MySignListForExcel2 implements HttpHandler {
 
         ByteArrayOutputStream result = new ByteArrayOutputStream();
 
-        workbook.write(result);
+        // ---------------------------------------------------------------------------------------------------------------------------
+        // Пересматриваем Word документ
+        // ---------------------------------------------------------------------------------------------------------------------------
+        try {
 
-        result.close();
+            List<IBodyElement> bodyElements = document.getBodyElements();// Список рассматриваемых элементов
+            List<RowRecord> rowRecords_Top = new ArrayList<RowRecord>();// Список считываемых элементов
+            List<RowRecord> rowRecords_Bottom = new ArrayList<RowRecord>();// Список считываемых элементов
+            ReadPlace readPlace = ReadPlace.TOP;// Точка чтения - Выше или ниже вклеиваемого документа
 
+            // Пересматриваем Word документ
+            for (IBodyElement iBodyElement : bodyElements) {
+
+                if (iBodyElement instanceof XWPFTable) {// Если элемент - Таблица
+
+                    XWPFTable table = (XWPFTable) iBodyElement;
+
+                    // Пересматриваемы строки в таблице
+                    for (int i = 0; i < table.getNumberOfRows(); i++) {
+
+                        XWPFTableRow tableRow = table.getRow(i);
+
+                        // Получаем список ячеек в строке
+                        List<XWPFTableCell> tableCells = tableRow.getTableCells();
+
+                        // Создаем новую запись о считанном элементе
+                        RowRecord rowRecord = new RowRecord();
+
+                        // Предопределяем строку, для извлечения текста - перед склеивымым документом
+                        // она слева
+                        XWPFTableCell tableCell = tableCells.get(0);
+
+                        if (tableCells.size() == 1) { // Если строка - обычный текст
+
+                            rowRecord.type = RowRecordType.TEXT_ROW;
+
+                        } else if (tableCells.size() == 2) { // Если строка - данные о подписи
+
+                            rowRecord.type = RowRecordType.SIGN_ROW;
+
+                            // Предопределяем ячейку для извлечения QR кода - перед склеивымым документом
+                            // она справа
+                            XWPFTableCell imageTableCell = tableCells.get(1);
+
+                            // Пересматриваем точки ввода инфы в зависимости от точки чтения
+                            if (readPlace == ReadPlace.BOTTOM) {
+
+                                // Предопределяем ячейку для извлечения QR кода - после склеиваемого документа
+                                // она справа
+                                tableCell = tableCells.get(1);
+
+                                // Предопределяем ячейку для извлечения QR кода - после склеиваемого документа
+                                // она слева
+                                imageTableCell = tableCells.get(0);
+
+                            }
+
+                            // --------------------------------------------------
+                            // Извлечение QR кода
+                            // --------------------------------------------------
+
+                            List<XWPFParagraph> lParagraphs = imageTableCell.getParagraphs();
+
+                            if (lParagraphs.size() > 0) {
+
+                                List<XWPFRun> lRuns = lParagraphs.get(0).getRuns();
+
+                                if (lRuns.size() > 0) {
+
+                                    List<XWPFPicture> lPictures = lRuns.get(0).getEmbeddedPictures();
+
+                                    if (lPictures.size() > 0) {
+
+                                        rowRecord.qr_code = workbook.addPicture(
+                                                lPictures.get(0).getPictureData().getData(), Workbook.PICTURE_TYPE_PNG);
+
+                                    }
+
+                                }
+
+                            }
+
+                            // --------------------------------------------------
+
+                        }
+
+                        // --------------------------------------------------
+                        // Извлечение текста
+                        // --------------------------------------------------
+
+                        List<XWPFParagraph> lParagraphs = tableCell.getParagraphs();
+
+                        List<String> text = new ArrayList<String>();
+
+                        for (int j = 0; j < lParagraphs.size(); j++) {
+
+                            String line = lParagraphs.get(j).getText();
+
+                            if (!(line == null || line.isEmpty() || line.trim().isEmpty())) {
+
+                                text.add(line);
+
+                            }
+
+                        }
+
+                        for (int j = 0; j < text.size(); j++) {
+
+                            rowRecord.text += text.get(j);
+
+                            if (j + 1 < text.size()) {
+
+                                rowRecord.text += "\n";
+
+                            }
+
+                        }
+
+                        // --------------------------------------------------
+
+                        // Добавляем данные об элементе
+                        if (readPlace == ReadPlace.TOP) {
+
+                            rowRecords_Top.add(rowRecord);
+
+                        } else {
+
+                            rowRecords_Bottom.add(rowRecord);
+
+                        }
+
+                    }
+
+                } else if (iBodyElement instanceof XWPFParagraph) {// Если элемент - Текстовая строка
+
+                    XWPFParagraph paragraph = (XWPFParagraph) iBodyElement;
+
+                    // Если данные - поле слияния - накидываем отметки об этом
+                    if (paragraph.getCTP().toString().contains("MERGEFIELD")) {
+
+                        // Меняем отметку о мечте чтения - после вклеимового документа
+                        readPlace = ReadPlace.BOTTOM;
+
+                    }
+
+                }
+
+            }
+
+            // ---------------------------------------------------------------------------------------------------------------------------
+            // Подготавливаем данные для редакции Excel
+            // ---------------------------------------------------------------------------------------------------------------------------
+
+            Short height = 57 * 20;
+
+            Short indient = 9;
+
+            Double scale = 1.0;
+
+            // ---------------------------
+
+            XSSFFont font_Normal = workbook.createFont();
+
+            String fontName = "Times New Roman";
+
+            font_Normal.setFontName(fontName);
+
+            XSSFFont font_Bold = workbook.createFont();
+
+            font_Bold.setFontName(fontName);
+            font_Bold.setBold(true);
+
+            // ---------------------------
+
+            XSSFFormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            DataFormatter formatter = new DataFormatter(true);
+
+            // ---------------------------------------------------------------------------------------------------------------------------
+            // Изменяем Excel докумет
+            // ---------------------------------------------------------------------------------------------------------------------------
+
+            for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+
+                // ---------------------------------------------------------------------------------------------------------------------------
+                // Подготавливаем данные для изменения листа документа
+                // ---------------------------------------------------------------------------------------------------------------------------
+
+                XSSFSheet sheet = workbook.getSheetAt(i);
+
+                // ---------------------------
+
+                XSSFCreationHelper helper = workbook.getCreationHelper();
+
+                // ---------------------------
+
+                scale = 1.0;
+
+                if (sheet.getColumnWidth(0) == 2048)
+                    scale = 0.9;
+
+                // ---------------------------
+                    
+                int lastRowNum = determineRowCount(evaluator, formatter, sheet);
+
+                // select last visible column in print area
+
+                int rightColumn = 0;
+                int leftColumn = sheet.getLeftCol();
+
+                for (int index = sheet.getFirstRowNum(); index < lastRowNum; index++) {
+
+                    XSSFRow row = sheet.getRow( index );
+
+                    if( row != null ){
+
+                        int colMax = row.getLastCellNum()-1;
+
+                        if( colMax > rightColumn ){
+
+                            rightColumn = colMax;
+
+                        }
+
+                    }
+                    
+                }
+                
+                // ---------------------------------------------------------------------------------------------------------------------------
+                // Изменяем лист документа
+                // ---------------------------------------------------------------------------------------------------------------------------
+
+                for (int j = rowRecords_Top.size() - 1; j >= 0; j--) {
+
+                    RowRecord rowRecord = rowRecords_Top.get(j);
+
+                    if (rowRecord.type == RowRecordType.TEXT_ROW && rowRecord.text.isEmpty() == false) {
+
+                        sheet.shiftRows( 0, sheet.getPhysicalNumberOfRows(), 1);
+
+                        XSSFRow row = sheet.createRow(0);
+
+                        XSSFCell cell = row.createCell( leftColumn );
+
+                        cell.setCellType(CellType.STRING);
+
+                        cell.setCellValue(rowRecord.text);
+
+                        XSSFCellStyle cellStyle = workbook.createCellStyle();
+
+                        cellStyle.setFont(font_Normal);
+
+                        cellStyle.setWrapText(true);
+
+                        cellStyle.setAlignment(HorizontalAlignment.RIGHT);
+
+                        cell.setCellStyle(cellStyle);
+
+                        if (rightColumn > leftColumn)
+                            sheet.addMergedRegion(new CellRangeAddress(
+                                    0, 0, leftColumn, rightColumn));
+
+                        int numberOfLines = rowRecord.text.split("\n").length + 1;
+
+                        row.setHeightInPoints(numberOfLines * sheet.getDefaultRowHeightInPoints());
+
+                        lastRowNum += 1;
+
+                    } else if (rowRecord.type == RowRecordType.SIGN_ROW
+                            && (rowRecord.text.isEmpty() == false || rowRecord.qr_code != null)) {
+
+                        sheet.shiftRows( 0, sheet.getPhysicalNumberOfRows(), 1);
+
+                        XSSFRow row = sheet.createRow(0);
+
+                        if (rightColumn > leftColumn)
+                            sheet.addMergedRegion(new CellRangeAddress(
+                                    0, 0, leftColumn, rightColumn));
+
+                        row.setHeight(height);
+
+                        if (rowRecord.text.isEmpty() == false) {
+
+                            XSSFCell cell = row.createCell(leftColumn);
+
+                            cell.setCellType(CellType.STRING);
+
+                            cell.setCellValue(rowRecord.text);
+
+                            XSSFCellStyle cellStyle = workbook.createCellStyle();
+
+                            cellStyle.setFont(font_Normal);
+
+                            cellStyle.setWrapText(true);
+
+                            cellStyle.setAlignment(HorizontalAlignment.RIGHT);
+
+                            cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+                            cellStyle.setIndention(indient);
+
+                            cell.setCellStyle(cellStyle);
+
+                            int numberOfLines = rowRecord.text.split("\n").length + 1;
+
+                            if (numberOfLines > 4) {
+
+                                row.setHeightInPoints(numberOfLines * sheet.getDefaultRowHeightInPoints());
+
+                            }
+
+                        }
+
+                        if (rowRecord.qr_code != null) {
+
+                            XSSFDrawing drawing = sheet.createDrawingPatriarch();
+
+                            XSSFClientAnchor anchor = helper.createClientAnchor();
+
+                            anchor.setAnchorType(ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE);
+
+                            anchor.setCol1(rightColumn + 1);
+                            anchor.setRow1(1);
+                            anchor.setCol2(rightColumn + 1);
+                            anchor.setRow2(1);
+
+                            anchor.setDx1(sheet.getColumnWidth(rightColumn + 1) - Units.toEMU(57));
+                            anchor.setDy1(Units.toEMU(0));
+
+                            anchor.setDx2(sheet.getColumnWidth(rightColumn + 1));
+                            anchor.setDy2(Units.toEMU(57));
+
+                            drawing.createPicture(anchor, rowRecord.qr_code);
+
+                        }
+
+                        lastRowNum += 1;
+
+                    }
+                }
+
+                for (int j = 0; j < rowRecords_Bottom.size(); j++) {
+
+                    RowRecord rowRecord = rowRecords_Bottom.get(j);
+
+                    if (rowRecord.type == RowRecordType.TEXT_ROW && rowRecord.text.isEmpty() == false) {
+
+                        XSSFRow row = sheet.createRow(lastRowNum);
+
+                        XSSFCell cell = row.createCell(leftColumn);
+
+                        cell.setCellType(CellType.STRING);
+
+                        cell.setCellValue(rowRecord.text);
+
+                        XSSFCellStyle cellStyle = workbook.createCellStyle();
+
+                        cellStyle.setFont(font_Bold);
+
+                        cell.setCellStyle(cellStyle);
+
+                        lastRowNum += 1;
+
+                    } else if (rowRecord.type == RowRecordType.SIGN_ROW
+                            && (rowRecord.text.isEmpty() == false || rowRecord.qr_code != null)) {
+
+                        XSSFRow row = sheet.createRow(lastRowNum);
+
+                        if (rightColumn > leftColumn)
+                            sheet.addMergedRegion(new CellRangeAddress(
+                                    lastRowNum, lastRowNum, leftColumn, rightColumn));
+
+                        row.setHeight(height);
+
+                        if (rowRecord.text.isEmpty() == false) {
+
+                            XSSFCell cell = row.createCell(leftColumn);
+
+                            cell.setCellType(CellType.STRING);
+
+                            cell.setCellValue(rowRecord.text);
+
+                            XSSFCellStyle cellStyle = workbook.createCellStyle();
+
+                            cellStyle.setFont(font_Normal);
+
+                            cellStyle.setWrapText(true);
+
+                            cellStyle.setIndention(indient);
+
+                            cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+                            cell.setCellStyle(cellStyle);
+
+                            int numberOfLines = rowRecord.text.split("\n").length + 1;
+
+                            if (numberOfLines > 5) {
+
+                                row.setHeightInPoints(numberOfLines * sheet.getDefaultRowHeightInPoints());
+
+                            }
+
+                        }
+
+                        if (rowRecord.qr_code != null) {
+
+                            XSSFDrawing drawing = sheet.createDrawingPatriarch();
+
+                            XSSFClientAnchor anchor = helper.createClientAnchor();
+
+                            anchor.setAnchorType(ClientAnchor.AnchorType.DONT_MOVE_DO_RESIZE);
+
+                            anchor.setCol1(leftColumn);
+                            anchor.setRow1(lastRowNum);
+                            anchor.setCol2(leftColumn);
+                            anchor.setRow2(lastRowNum);
+
+                            anchor.setDx2(Units.toEMU(57));
+                            anchor.setDy2(Units.toEMU(57));
+
+                            XSSFPicture pict = drawing.createPicture(anchor, rowRecord.qr_code);
+
+                            pict.resize(scale, 1.0);
+
+                        }
+
+                        lastRowNum += 2;
+
+                    }
+
+                }
+
+                // ---------------------------------------------------------------------------------------------------------------------------
+
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        }finally {
+
+            workbook.write(result);
+
+        }
         // ---------------------------
         // return result
         // ---------------------------
@@ -608,71 +618,84 @@ public class MySignListForExcel2 implements HttpHandler {
 
     }
 
-    private static int determineRowCount( XSSFFormulaEvaluator evaluator, DataFormatter formatter, XSSFSheet sheet)
-    {
+    private static int determineRowCount(XSSFFormulaEvaluator evaluator, DataFormatter formatter, XSSFSheet sheet) {
         int lastRowIndex = -1;
 
-        if( sheet.getPhysicalNumberOfRows() > 0 )
-        {
+        if (sheet.getPhysicalNumberOfRows() > 0) {
             // getLastRowNum() actually returns an index, not a row number
             lastRowIndex = sheet.getLastRowNum();
-    
-            // now, start at end of spreadsheet and work our way backwards until we find a row having data
-            for( ; lastRowIndex >= 0; lastRowIndex-- )
-            {
-                XSSFRow row = sheet.getRow( lastRowIndex );
-                if( !isRowEmpty( evaluator, formatter, row ) )
-                {
+
+            // now, start at end of spreadsheet and work our way backwards until we find a
+            // row having data
+            for (; lastRowIndex >= 0; lastRowIndex--) {
+                XSSFRow row = sheet.getRow(lastRowIndex);
+                if (!isRowEmpty(evaluator, formatter, row)) {
                     break;
                 }
             }
+
         }
+
+        lastRowIndex++;
+
+        for (int i = sheet.getNumMergedRegions() - 1; i >= 0; i--) {
+
+            CellRangeAddress region = sheet.getMergedRegion(i);
+
+            if( region.getFirstRow() >= lastRowIndex ){
+
+                sheet.removeMergedRegion( i );
+
+            }
+
+        }
+
         return lastRowIndex;
     }
-    
+
     /**
-     * Determine whether a row is effectively completely empty - i.e. all cells either contain an empty string or nothing.
+     * Determine whether a row is effectively completely empty - i.e. all cells
+     * either contain an empty string or nothing.
      */
-    private static boolean isRowEmpty( XSSFFormulaEvaluator evaluator, DataFormatter formatter, XSSFRow row )
-    {
-        if( row == null ){
+    private static boolean isRowEmpty(XSSFFormulaEvaluator evaluator, DataFormatter formatter, XSSFRow row) {
+        if (row == null) {
             return true;
         }
-    
+
         int cellCount = row.getLastCellNum() + 1;
-        for( int i = 0; i < cellCount; i++ ){
-            String cellValue = getCellValue( evaluator, formatter, row, i );
-            if( cellValue != null && cellValue.length() > 0 ){
+        for (int i = 0; i < cellCount; i++) {
+            String cellValue = getCellValue(evaluator, formatter, row, i);
+            if (cellValue != null && cellValue.length() > 0) {
                 return false;
             }
         }
         return true;
     }
-    
+
     /**
-     * Get the effective value of a cell, formatted according to the formatting of the cell.
-     * If the cell contains a formula, it is evaluated first, then the result is formatted.
+     * Get the effective value of a cell, formatted according to the formatting of
+     * the cell.
+     * If the cell contains a formula, it is evaluated first, then the result is
+     * formatted.
      * 
-     * @param row the row
+     * @param row         the row
      * @param columnIndex the cell's column index
      * @return the cell's value
      */
-    private static String getCellValue( XSSFFormulaEvaluator evaluator, DataFormatter formatter, XSSFRow  row, int columnIndex )
-    {
+    private static String getCellValue(XSSFFormulaEvaluator evaluator, DataFormatter formatter, XSSFRow row,
+            int columnIndex) {
         String cellValue;
-        XSSFCell cell = row.getCell( columnIndex );
-        if( cell == null ){
+        XSSFCell cell = row.getCell(columnIndex);
+        if (cell == null) {
             // no data in this cell
             cellValue = null;
-        }
-        else{
-            if( cell.getCellType() != CellType.FORMULA ){
+        } else {
+            if (cell.getCellType() != CellType.FORMULA) {
                 // cell has a value, so format it into a string
-                cellValue = formatter.formatCellValue( cell );
-            }
-            else {
+                cellValue = formatter.formatCellValue(cell);
+            } else {
                 // cell has a formula, so evaluate it
-                cellValue = formatter.formatCellValue( cell, evaluator );
+                cellValue = formatter.formatCellValue(cell, evaluator);
             }
         }
         return cellValue;

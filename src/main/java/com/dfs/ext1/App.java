@@ -26,7 +26,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
 public final class App {
 
-    private static String version = "1.0.006";
+    private static String version = "1.0.008";
 
     private App() {
     }
@@ -46,9 +46,9 @@ public final class App {
         server.setExecutor(null); // creates a default executor
         server.start();
 
-        // LoadTestFile();
+        //LoadTestFile();
 
-        // System.out.println("Выполнено слияние MySignListForExcel2");
+        //System.out.println("Выполнено слияние MySignListForExcel2");
 
     }
 
